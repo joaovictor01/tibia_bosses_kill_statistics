@@ -1,28 +1,26 @@
 import os
+import argparse
 import sys
 import json
 import logging
 import requests
 from bs4 import BeautifulSoup
 from scraper import Scraper
+from logger import LOGGER
 
 BOSSES_NAMES_FILE = 'bosses_names.txt'
 
-LOGGER = logging.getLogger(__name__)
-STDOUT_HANDLER = logging.StreamHandler(stream=sys.stdout)
-STDOUT_HANDLER.setLevel(logging.DEBUG)
-LOGGER.addHandler(STDOUT_HANDLER)
-LOGGER.setLevel(logging.INFO)
 
 class BossesStatistics:
     url = 'https://www.tibia.com/community/?subtopic=killstatistics'
+
     def __init__(self, world):
         self.world = world
         self.soup = self.get_world_soup()
         self.scraper = Scraper()
         self.scraper.set_soup(self.soup)
         super().__init__()
-    
+
     def get_world_soup(self):
         """ Return the bossess kill statistics for the specified world. """
         headers = {
@@ -67,9 +65,9 @@ class BossesStatistics:
                 }
                 bosses.append(boss_statistics_object)
             except Exception as error:
-                LOGGER.debug(error)
+                LOGGER.debug('[get_all_bosses_statistics] Error: %s', error)
         return bosses
-    
+
     def get_statistics_of_boss(self, boss_name):
         bosses = self.get_all_bosses_statistics_objects()
         for boss in bosses:
@@ -79,18 +77,28 @@ class BossesStatistics:
 
 
 def main():
-    bosses_statistics_lobera = BossesStatistics(world='Lobera')
-    bosses = bosses_statistics_lobera.get_all_bosses_statistics_objects()
-    json_bosses = json.dumps(bosses)
-    with open('bosses_lobera.json', 'w+') as json_file:
-        json_file.write(json_bosses)
-    if len(sys.argv) > 1:
-        boss_statistics = bosses_statistics_lobera.get_statistics_of_boss(sys.argv[1])
+    parser = argparse.ArgumentParser(description='Get kill statistics of a boss or all bosses of a world in Tibia')
+    parser.add_argument('--world', dest='tibia_world', type=str, required=True, help='Tibia world')
+    parser.add_argument('--boss', dest='boss_name', type=str, required=False, help='Name of the boss (optional)')
+    args = parser.parse_args()
+    tibia_world = args.tibia_world.capitalize()
+    LOGGER.info('Tibia world set to: %s', tibia_world)
+    bosses_statistics = BossesStatistics(world=tibia_world)
+    if boss_name := args.boss_name:
+        boss_statistics = bosses_statistics.get_statistics_of_boss(boss_name)
         if boss_statistics:
             json_formatted_boss_statistics = json.dumps(boss_statistics, indent=4)
             print(json_formatted_boss_statistics)
+        else:
+            LOGGER.info(f'Boss {boss_name} not found')
+    else:
+        all_bosses_statistics = bosses_statistics.get_all_bosses_statistics_objects()
+        json_all_bosses_statistics = json.dumps(all_bosses_statistics)
+
+        with open(f'bosses_statistics_{tibia_world}.json', 'w+') as json_file:
+            json_file.write(json_all_bosses_statistics)
+            LOGGER.info('Bosses statistics of world %s saved to bosses_statistics_%s.json', tibia_world, tibia_world)
 
 
 if __name__ == '__main__':
     main()
-    
