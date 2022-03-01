@@ -1,8 +1,5 @@
-import os
 import argparse
-import sys
 import json
-import logging
 import requests
 from bs4 import BeautifulSoup
 from scraper import Scraper
@@ -47,7 +44,6 @@ class BossesStatistics:
         return self.scraper.get_first_tag('table')
 
     def get_all_bosses_statistics_objects(self):
-        # table = self.get_statistics_table()
         bosses = []
         for tr in self.soup.find_all('tr'):
             try:

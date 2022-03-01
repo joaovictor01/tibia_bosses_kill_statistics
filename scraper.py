@@ -1,3 +1,8 @@
+import re
+import requests
+from bs4 import BeautifulSoup
+
+
 class Scraper:
     """ Class responsible for general scraping operations"""
     soup = None
@@ -23,7 +28,7 @@ class Scraper:
         """ Return the BeautifulSoup object of a given url """
         children_req = requests.get(url, verify=False)
         return BeautifulSoup(children_req.content, 'html.parser')
-    
+
     def find_all_occurrences_of_str(self, string):
         """ Return a list of string with all occurrences of a string """
         return self.soup.find_all(string=re.compile(string))
@@ -38,7 +43,7 @@ class Scraper:
 
     def get_first_tag(self, tag):
         return self.soup.find(tag)
-    
+
     def get_all_tags_with_class(self, tag, cls):
         return self.soup.find_all(tag, attrs={'class': cls})
 
@@ -50,7 +55,7 @@ class Scraper:
 
     def get_first_tag_with_id(self, tag, id):
         return self.soup.find(tag, attrs={'id': id})
-    
+
     def get_first_occurrence_str(self, string):
         """ Return the first occurrence of the given string """
         return self.soup.find(string=re.compile(string))
